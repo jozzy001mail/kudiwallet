@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KudiWallet — Bitcoin &amp; Lightning wallet for everyday Africa</title>
+<meta name="description" content="KudiWallet is a fast, simple Bitcoin and Lightning wallet built for everyday payments in Africa. Testnet MVP for the Dakar Bitcoin Hack 2026.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">⚡</span>
+    <div>
+      <h1>KudiWallet</h1>
+      <p class="tagline">Bitcoin &amp; Lightning for everyday Africa</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span class="badge" id="networkBadge">Bitcoin Testnet</span>
+    <label class="demo-toggle" title="Demo mode simulates a balance so you can try every flow without funding the wallet.">
+      <input type="checkbox" id="demoToggle"> Demo mode
+    </label>
+  </div>
+</header>
+
+<div id="demoBanner" class="demo-banner" hidden>
+  <strong>DEMO MODE</strong> — simulated funds, not real testnet coins. Every flow works end to end, but
+  nothing here touches the Bitcoin network. Switch demo mode off for the real testnet wallet.
+</div>
+
+<main class="container">
+
+  <!-- ============ ONBOARDING ============ -->
+  <section id="onboarding" class="card">
+    <h2>Your wallet, your keys</h2>
+    <p>KudiWallet creates a real Bitcoin testnet wallet on your device. Your 12-word recovery
+    phrase never leaves this browser — it is encrypted with a passphrase you choose.</p>
+    <div class="onboard-actions">
+      <button id="btnCreate" class="btn primary">Create new wallet</button>
+      <button id="btnImport" class="btn">Import recovery phrase</button>
+      <button id="btnDemoWallet" class="btn ghost">Load demo wallet</button>
+    </div>
+
+    <div id="createPanel" class="panel" hidden>
+      <h3>Your recovery phrase</h3>
+      <p class="warn">Write these 12 words down in order. Anyone with them can spend your coins.
+      KudiWallet never sends them anywhere.</p>
+      <div id="mnemonicWords" class="words"></div>
+      <label>Set a spending passphrase
+        <input type="password" id="createPassphrase" placeholder="At least 4 characters" autocomplete="new-password">
+      </label>
+      <label>Confirm passphrase
+        <input type="password" id="createPassphrase2" placeholder="Repeat passphrase" autocomplete="new-password">
+      </label>
+      <button id="btnConfirmCreate" class="btn primary">I wrote it down — open my wallet</button>
+      <p id="createError" class="error" hidden></p>
+    </div>
+
+    <div id="importPanel" class="panel" hidden>
+      <h3>Import a wallet</h3>
+      <label>Recovery phrase (12 words)
+        <textarea id="importMnemonic" rows="2" placeholder="abandon abandon … about"></textarea>
+      </label>
+      <label>Set a spending passphrase
+        <input type="password" id="importPassphrase" placeholder="At least 4 characters" autocomplete="new-password">
+      </label>
+      <button id="btnConfirmImport" class="btn primary">Import wallet</button>
+      <p id="importError" class="error" hidden></p>
+    </div>
+  </section>
+
+  <!-- ============ WALLET ============ -->
+  <section id="wallet" hidden>
+    <div class="card balance-card">
+      <div class="balance-row">
+        <div>
+          <p class="label">Balance</p>
+          <p class="balance"><span id="balanceSats">—</span> <span class="unit">sats</span></p>
+          <p class="fiat" id="balanceFiat">—</p>
+        </div>
+        <div class="balance-actions">
+          <button id="btnRefresh" class="btn small">↻ Refresh</button>
+          <button id="btnLock" class="btn small ghost">Lock wallet</button>
+        </div>
+      </div>
+      <p class="muted" id="walletMeta"></p>
+    </div>
+
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="receive" role="tab">Receive</button>
+        <button class="tab" data-tab="send" role="tab">Send</button>
+        <button class="tab" data-tab="lightning" role="tab">Lightning</button>
+        <button class="tab" data-tab="activity" role="tab">Activity</button>
+      </div>
+
+      <!-- RECEIVE -->
+      <div id="tab-receive" class="tabpanel">
+        <p>Share this address to receive Bitcoin (testnet). It is a real address derived from your recovery phrase.</p>
+        <div class="receive-grid">
+          <canvas id="qrCanvas" width="180" height="180"></canvas>
+          <div>
+            <p class="mono address" id="receiveAddress">—</p>
+            <div class="row">
+              <button id="btnCopyAddress" class="btn small">Copy address</button>
+              <a class="btn small ghost" id="faucetLink" href="https://mempool.space/testnet/faucet" target="_blank" rel="noopener">Get free testnet coins ↗</a>
+            </div>
+            <p class="muted">No testnet coins yet? The faucet sends a small amount to this address so you can try sending.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEND -->
+      <div id="tab-send" class="tabpanel" hidden>
+        <label>Send to (testnet address)
+          <input id="sendAddress" type="text" placeholder="tb1q…" spellcheck="false">
+        </label>
+        <label>Amount (sats)
+          <input id="sendAmount" type="number" min="546" placeholder="e.g. 10000">
+        </label>
+        <p class="muted" id="sendFiatPreview"></p>
+        <label>Fee speed
+          <select id="sendFee">
+            <option value="slow">Slow — cheapest</option>
+            <option value="standard" selected>Standard</option>
+            <option value="fast">Fast</option>
+          </select>
+        </label>
+        <p class="muted" id="feePreview"></p>
+        <button id="btnSend" class="btn primary">Send payment</button>
+        <p id="sendStatus" class="status" hidden></p>
+      </div>
+
+      <!-- LIGHTNING -->
+      <div id="tab-lightning" class="tabpanel" hidden>
+        <div class="ln-grid">
+          <div>
+            <h3>Create an invoice</h3>
+            <p>Get paid over Lightning: a real BOLT11 invoice, signed by your wallet's node key.</p>
+            <label>Amount (sats)
+              <input id="lnAmount" type="number" min="1" placeholder="e.g. 1000">
+            </label>
+            <label>What is it for?
+              <input id="lnDescription" type="text" placeholder="e.g. 2 kg of rice" maxlength="120">
+            </label>
+            <button id="btnCreateInvoice" class="btn primary">Create invoice</button>
+            <div id="invoiceOut" hidden>
+              <p class="mono invoice" id="invoiceText"></p>
+              <canvas id="invoiceQr" width="160" height="160"></canvas>
+              <div class="row">
+                <button id="btnCopyInvoice" class="btn small">Copy invoice</button>
+                <button id="btnPayInvoiceDemo" class="btn small ghost">Pay it (demo)</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3>Pay an invoice</h3>
+            <p>Paste any testnet BOLT11 invoice to inspect it. Paying needs a Lightning node —
+            in this MVP, payment is simulated in demo mode and clearly labelled.</p>
+            <label>Invoice
+              <textarea id="lnPaste" rows="3" placeholder="lntb…"></textarea>
+            </label>
+            <button id="btnDecodeInvoice" class="btn">Inspect invoice</button>
+            <div id="decodedInvoice" class="panel" hidden></div>
+          </div>
+        </div>
+        <p class="muted">Lightning balance (demo): <strong id="lnBalance">—</strong></p>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div id="tab-activity" class="tabpanel" hidden>
+        <p class="muted">On-chain history comes live from the testnet network. Demo payments are labelled DEMO.</p>
+        <ul id="txList" class="tx-list"><li class="muted">Loading…</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="card honesty">
+    <h2>What is real, what is simulated</h2>
+    <ul>
+      <li><strong>Real:</strong> your recovery phrase (BIP39), key derivation (BIP32/BIP84), testnet
+      addresses, balances and history (mempool.space testnet API), on-chain sends — built, signed
+      and broadcast as real testnet transactions — and BOLT11 invoices (real encoding, signed).</li>
+      <li><strong>Simulated:</strong> Lightning settlement. This MVP has no live Lightning node, so
+      paying an invoice is simulated and labelled DEMO. The next iteration connects a real node
+      (LND/CLN) or a non-custodial SDK. Demo mode also simulates an on-chain balance so you can
+      try every flow without faucet coins.</li>
+      <li><strong>Your keys never leave this browser.</strong> The server only proxies public
+      blockchain data; it never sees your phrase or private keys.</li>
+    </ul>
+  </section>
+
+  <footer class="muted">
+    KudiWallet — built by Joshua Owoade (jozzy-001, Nigeria) for the Dakar Bitcoin Hack 2026 by BTrust.
+    Open source, testnet only, never use for real funds.
+    <a href="https://mempool.space/testnet" target="_blank" rel="noopener">Testnet explorer ↗</a>
+  </footer>
+</main>
+
+<script src="bundle.js"></script>
+</body>
+</html>
