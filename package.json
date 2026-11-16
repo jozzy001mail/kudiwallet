@@ -1,0 +1,29 @@
+{
+  "name": "kudiwallet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KudiWallet — Bitcoin & Lightning wallet for everyday Africa. Dakar Bitcoin Hack 2026 entry (testnet MVP).",
+  "scripts": {
+    "start": "node server.js",
+    "build": "npx esbuild src/app.js --bundle --outfile=public/bundle.js --format=iife --minify",
+    "dev": "npm run build && node server.js",
+    "test": "node test/vectors.test.js"
+  },
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@scure/base": "2.4.0",
+    "@scure/bip32": "2.4.0",
+    "@scure/bip39": "2.4.0",
+    "express": "5.3.0",
+    "qrcode-generator": "2.0.4"
+  },
+  "devDependencies": {
+    "bip32": "^5.0.1",
+    "bitcoinjs-lib": "7.0.5",
+    "bolt11": "1.4.2",
+    "esbuild": "0.28.2",
+    "tiny-secp256k1": "^2.2.5"
+  }
+}
