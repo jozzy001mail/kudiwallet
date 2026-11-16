@@ -70,6 +70,12 @@ app.post('/api/broadcast', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true, network: 'bitcoin-testnet' }));
 
-app.listen(PORT, () => {
-  console.log(`KudiWallet running at http://localhost:${PORT} (Bitcoin testnet)`);
-});
+export default app;
+
+// Only listen when run directly (node server.js). On Vercel the app is
+// imported by api/index.js and served as a serverless function instead.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  app.listen(PORT, () => {
+    console.log(`KudiWallet running at http://localhost:${PORT} (Bitcoin testnet)`);
+  });
+}
